@@ -35,8 +35,9 @@ gain          = ProtoField.int32("difi.gain", "Attenuation/Gain", base.DEC)
 sample_rate   = ProtoField.uint64("difi.sample_rate", "Sample Rate", base.DEC)
 timestamp_adj = ProtoField.uint64("difi.time_adj", "Timestamp Adjustment", base.DEC)
 time_cal      = ProtoField.uint32("difi.time_cal", "Timestamp Calibration Time", base.DEC)
-se_indicator  = ProtoField.uint32("difi.se_indicator", "State and Event Indicators", base.DEC)
-data_format   = ProtoField.uint64("difi.data_format", "Data Packet Payload Format", base.DEC)
+se_indicator  = ProtoField.uint32("difi.se_indicator", "State and Event Indicators", base.HEX)
+data_format   = ProtoField.uint64("difi.data_format", "Data Packet Payload Format", base.HEX)
+bit_depth     = ProtoField.uint8("difi.bit_depth", "Bit_Depth-1", base.DEC, NULL,0x3f)
 
 -- Version Header fields
 cif0    = ProtoField.uint32("difi.cif0", "Context Indicator Field (CIF) 0", base.HEX)
@@ -67,7 +68,7 @@ difi_protocol.fields = {
     data, data_len,
     -- context
     cif, ref_point, bandwidth, if_ref_freq, rf_ref_freq, if_offset, ref_level, gain, sample_rate,
-    timestamp_adj, time_cal, se_indicator, data_format,
+    timestamp_adj, time_cal, se_indicator, data_format, bit_depth,
     -- version
     cif0, cif1, v49spec, info,
     -- command
@@ -102,20 +103,21 @@ local function context_pkt_dissector(buffer, tree, name)
     -- Header
     difi_common_dissector(buffer, subtree)
 
-    -- Additional header fiels
-    subtree:add(cif, buffer(28, 4):uint())
-    subtree:add(ref_point, buffer(32, 4):uint())
-    subtree:add(bandwidth, buffer(36, 8):uint64())
-    subtree:add(if_ref_freq, buffer(44, 8):uint64())
-    subtree:add(rf_ref_freq, buffer(52, 8):uint64())
-    subtree:add(if_offset, buffer(60, 8):int64())
-    subtree:add(ref_level, buffer(68, 4):uint())
-    subtree:add(gain, buffer(72, 4):int())
-    subtree:add(sample_rate, buffer(76, 8):uint64())
-    subtree:add(timestamp_adj, buffer(84, 8):uint64())
-    subtree:add(time_cal, buffer(92, 4):uint())
-    subtree:add(se_indicator, buffer(96, 4):uint())
-    subtree:add(data_format, buffer(100, 8):uint64())
+    -- Additional header fields
+    subtree:add(cif, buffer(28, 4))
+    subtree:add(ref_point, buffer(32, 4))
+    subtree:add(bandwidth, buffer(36, 8))
+    subtree:add(if_ref_freq, buffer(44, 8))
+    subtree:add(rf_ref_freq, buffer(52, 8))
+    subtree:add(if_offset, buffer(60, 8))
+    subtree:add(ref_level, buffer(68, 4))
+    subtree:add(gain, buffer(72, 4))
+    subtree:add(sample_rate, buffer(76, 8))
+    subtree:add(timestamp_adj, buffer(84, 8))
+    subtree:add(time_cal, buffer(92, 4))
+    subtree:add(se_indicator, buffer(96, 4))
+    subtree:add(data_format, buffer(100, 8))
+    subtree:add_packet_field(bit_depth, buffer(103, 1),ENC_BIG_ENDIAN)
 end
 
 local function data_pkt_dissector(buffer, tree, name)
